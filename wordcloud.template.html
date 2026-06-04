@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Words-N-Shapes</title>
+  <meta name="description" data-i18n="meta.description" content="Wortwolken in Form bringen — Wörter füllen Maskenformen, ganz im Browser.">
+  <meta name="author" content="Alexander Erben">
+  <meta name="generator" content="Built with Anthropic Claude">
+  <meta name="theme-color" content="#2a2d34">
+  <meta name="application-name" content="Words-N-Shapes">
+  <meta property="og:title" content="Words-N-Shapes">
+  <meta property="og:description" data-i18n="meta.description" content="Wortwolken in Form bringen — Wörter füllen Maskenformen, ganz im Browser.">
+  <meta property="og:type" content="website">
+  <link rel="icon" type="image/svg+xml" href="<!--FAVICON-->">
+  <style>
+<!--STYLES-->
+<!--FONTS-->
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1 data-i18n="app.title">Words-N-Shapes</h1>
+    <div class="lang-switch" role="group" aria-label="Sprache">
+      <button class="lang-btn" data-lang="de" type="button">DE</button>
+      <button class="lang-btn" data-lang="en" type="button">EN</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel input-panel" aria-label="Eingabe">
+      <h2 data-i18n="input.heading">Eingabe</h2>
+
+      <label class="block">
+        <span data-i18n="input.template.label">Vorlage laden:</span>
+        <select id="cfg-theme">
+          <option value="" data-i18n="input.template.empty">— eigene Eingabe —</option>
+        </select>
+      </label>
+
+      <div class="entries-toolbar">
+        <button id="btn-add-entry" type="button" data-i18n="input.addEntry">+ Eintrag</button>
+        <button id="btn-fill-from-text" type="button" data-i18n="input.fillFromText">+ aus Text befüllen…</button>
+        <button id="btn-import-csv" type="button" data-i18n="input.importCsv">CSV importieren</button>
+        <button id="btn-export-csv" type="button" data-i18n="input.exportCsv">CSV exportieren</button>
+        <button id="btn-clear-list" type="button" class="danger" data-i18n="input.clearList" data-i18n-title="tooltip.listEmpty" disabled>Liste leeren</button>
+        <input id="file-input" type="file" accept=".txt,.csv" hidden>
+      </div>
+
+      <div class="entries-wrap">
+        <table class="entries-table">
+          <thead>
+            <tr>
+              <th id="th-text" aria-sort="none"><button type="button" class="th-sort" data-i18n="table.header.word">Wort</button></th>
+              <th id="th-weight" aria-sort="none"><button type="button" class="th-sort" data-i18n="table.header.weight">Gewicht</button></th>
+              <th id="th-group" aria-sort="none"><button type="button" class="th-sort" data-i18n="table.header.group">Gruppe</button></th>
+              <th aria-label="Aktion"></th>
+            </tr>
+          </thead>
+          <tbody id="entries-tbody">
+            <tr class="entries-empty"><td colspan="4" data-i18n="table.empty">Keine Einträge — über die Knöpfe oben hinzufügen.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="groups-section">
+        <div class="groups-header">
+          <strong data-i18n="groups.heading">Gruppen</strong>
+          <button id="btn-new-group" type="button" data-i18n="groups.new">+ Neue Gruppe</button>
+          <button id="btn-clear-groups" type="button" class="danger" data-i18n="groups.clearAll" data-i18n-title="tooltip.groupsOnlyOne" disabled>Alle leeren</button>
+        </div>
+        <div id="group-chips" class="group-chips"></div>
+      </div>
+
+      <details class="cfg-collapsible">
+        <summary>
+          <span data-i18n="config.filters">Befüll-Filter</span>
+          <span class="hint" data-i18n="config.filters.hint"> (wirken beim „aus Text befüllen")</span>
+        </summary>
+        <div class="cfg-collapsible-body">
+          <label class="switch-row">
+            <input type="checkbox" id="cfg-stopwords-on" checked>
+            <span data-i18n="config.stopwords">Stopwörter aktiv (DE+EN)</span>
+          </label>
+          <label class="block">
+            <span data-i18n="config.customStopwords">Zusätzlich ausschließen:</span>
+            <textarea id="cfg-custom-stopwords" rows="2" data-i18n-placeholder="config.customStopwords.placeholder" placeholder="komma- oder zeilengetrennt"></textarea>
+          </label>
+          <label class="inline">
+            <span data-i18n="config.minCount">Mindesthäufigkeit:</span>
+            <input type="number" id="cfg-min-count" value="1" min="1" max="999" step="1">
+          </label>
+          <label class="inline">
+            <span data-i18n="config.minLength">Mindestlänge:</span>
+            <input type="number" id="cfg-min-length" value="2" min="1" max="20" step="1">
+          </label>
+        </div>
+      </details>
+
+      <div class="storage-section">
+        <div class="storage-header">
+          <strong data-i18n="storage.heading">Meine Kreationen</strong>
+        </div>
+        <div class="storage-subtitle" data-i18n="storage.subtitle">Slots leben im Browser · JSON-Dateien sind portabel</div>
+        <div class="storage-actions">
+          <button id="btn-save-slot" type="button" data-i18n="storage.saveSlot" data-i18n-title="storage.saveSlot.title">+ Speichern</button>
+          <button id="btn-import-json" type="button" data-i18n="storage.importJson" data-i18n-title="storage.importJson.title">JSON importieren</button>
+          <button id="btn-export-json" type="button" data-i18n="storage.exportJson" data-i18n-title="storage.exportJson.title">JSON exportieren</button>
+          <input id="json-file-input" type="file" accept=".json,.wcloud,application/json" hidden>
+        </div>
+        <div id="slot-list" class="slot-list"></div>
+        <div class="image-export-row">
+          <span class="image-export-hint" data-i18n="storage.downloadHint">Aktuelle Vorschau als Bild herunterladen:</span>
+          <div class="image-export-buttons">
+            <button id="btn-export-svg" type="button" data-i18n="storage.exportSvg" data-i18n-title="storage.exportSvg.title">SVG herunterladen</button>
+            <button id="btn-export-png" type="button" data-i18n="storage.exportPng" data-i18n-title="storage.exportPng.title">PNG herunterladen</button>
+            <button id="btn-copy-png" type="button" data-i18n="storage.copyImage" data-i18n-title="storage.copyImage.title">Bild kopieren</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="credits-row">
+        <button id="btn-credits" type="button" class="link-btn" data-i18n="credits.button">Credits &amp; Lizenzen</button>
+      </div>
+    </section>
+
+    <section class="panel config-panel" aria-label="Einstellungen">
+      <h2 data-i18n="config.heading">Einstellungen</h2>
+
+      <fieldset>
+        <legend data-i18n="config.engineHeading">Engine</legend>
+        <div class="engine-radios" role="radiogroup">
+          <label><input type="radio" name="cfg-engine" value="d3-cloud" checked> <span data-i18n="config.engine.d3-cloud">d3-cloud (Standard, Spiralalgorithmus)</span></label>
+          <label><input type="radio" name="cfg-engine" value="wordcloud2"> <span data-i18n="config.engine.wordcloud2">wordcloud2.js (mehr Formen, Canvas-basiert)</span></label>
+        </div>
+        <div id="cfg-engine-options-d3cloud" class="engine-options">
+          <label class="inline">
+            <span data-i18n="config.spiral">Spirale:</span>
+            <select id="cfg-spiral">
+              <option value="archimedean" selected data-i18n="config.spiral.archimedean">archimedisch</option>
+              <option value="rectangular" data-i18n="config.spiral.rectangular">rechteckig</option>
+            </select>
+          </label>
+        </div>
+        <div id="cfg-engine-options-wc2" class="engine-options" hidden>
+          <label class="inline">
+            <span data-i18n="config.wc2.gridSize">Raster-Auflösung:</span>
+            <input type="range" id="cfg-wc2-grid-size" min="4" max="16" step="1" value="8">
+            <span id="cfg-wc2-grid-size-val" class="range-val">8</span>
+          </label>
+          <label class="inline">
+            <span data-i18n="config.wc2.ellipticity">Stauchung:</span>
+            <input type="range" id="cfg-wc2-ellipticity" min="0" max="1" step="0.05" value="0.65">
+            <span id="cfg-wc2-ellipticity-val" class="range-val">0.65</span>
+          </label>
+          <label class="switch-row">
+            <input type="checkbox" id="cfg-wc2-shrink-to-fit">
+            <span data-i18n="config.wc2.shrinkToFit">Bei Platzmangel verkleinern</span>
+          </label>
+          <label class="switch-row">
+            <input type="checkbox" id="cfg-wc2-use-native-shapes" checked>
+            <span data-i18n="config.wc2.useNativeShapes">Native Formen verwenden</span>
+          </label>
+          <div class="hint" data-i18n="config.wc2.useNativeShapes.hint">Schneller, aber andere Geometrie als die SVG-Slugs.</div>
+          <div class="hint" data-i18n="config.wc2.note">Hinweis: SVG-Export und Per-Gruppe-Padding sind bei wordcloud2 nicht verfügbar.</div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend data-i18n="config.colorBg">Farbe &amp; Hintergrund</legend>
+        <label class="inline">
+          <span data-i18n="config.palette">Palette:</span>
+          <select id="cfg-palette"></select>
+        </label>
+        <div id="cfg-palette-custom-row" class="custom-palette-row">
+          <div class="custom-palette-head">
+            <span class="hint" data-i18n="config.currentPalette">Aktuelle Palette · Klick auf Tafel: Farbe wählen · × leert · Drag &amp; Drop sortiert</span>
+            <button id="btn-palette-clear-all" type="button" data-i18n="config.clearAll">Alle leeren</button>
+            <button id="btn-palette-from-image" type="button" data-i18n="config.paletteFromImage" data-i18n-title="config.paletteFromImage.title">Palette aus Bild</button>
+            <input type="file" id="palette-image-file" accept="image/png,image/jpeg,image/webp" hidden>
+          </div>
+          <div class="inline-palette-grid" id="inline-palette-grid" aria-label="Aktuelle Palette"></div>
+        </div>
+        <div id="cfg-palette-gradient-row" class="gradient-row" hidden>
+          <div class="gradient-head">
+            <span class="gradient-label" data-i18n="config.gradient.label">Verlauf von → (via) → bis</span>
+            <label class="switch-row small">
+              <input type="checkbox" id="cfg-palette-grad-use-via">
+              <span data-i18n="config.gradient.useVia">Via-Farbe verwenden</span>
+            </label>
+          </div>
+          <div class="gradient-pickers">
+            <input type="color" id="cfg-palette-grad-from" class="big-swatch" value="#ff006e">
+            <input type="color" id="cfg-palette-grad-via"  class="big-swatch" value="#ffffff" disabled>
+            <input type="color" id="cfg-palette-grad-to"   class="big-swatch" value="#00d4ff">
+          </div>
+          <div class="gradient-preview" id="gradient-preview" aria-hidden="true"></div>
+          <div class="gradient-legend">
+            <span data-i18n="config.gradient.wordHigh">wichtigstes Wort</span>
+            <span data-i18n="config.gradient.wordLow">unwichtigstes Wort</span>
+          </div>
+        </div>
+        <div class="bg-block">
+          <div class="bg-row">
+            <span class="bg-label" id="cfg-bg-canvas-label" data-i18n="config.bg.canvas">Fläche:</span>
+            <div class="bg-swatches" id="cfg-bg-canvas-swatches" role="radiogroup" aria-labelledby="cfg-bg-canvas-label">
+              <div class="bg-swatch active" data-bg="transparent">
+                <span class="bg-swatch-fill bg-transparent"></span>
+                <span class="bg-swatch-name" data-i18n="config.bg.transparent">transparent</span>
+              </div>
+              <div class="bg-swatch" data-bg="white">
+                <span class="bg-swatch-fill" style="background:#ffffff;border:1px solid var(--border);"></span>
+                <span class="bg-swatch-name" data-i18n="config.bg.white">weiß</span>
+              </div>
+              <div class="bg-swatch" data-bg="black">
+                <span class="bg-swatch-fill" style="background:#000000;"></span>
+                <span class="bg-swatch-name" data-i18n="config.bg.black">schwarz</span>
+              </div>
+              <div class="bg-swatch" data-bg="custom">
+                <span class="bg-swatch-fill" id="bg-canvas-custom-fill" style="background:#222244;"></span>
+                <input type="color" id="bg-canvas-custom-color" value="#222244">
+                <span class="bg-swatch-name" data-i18n="config.bg.custom">custom</span>
+              </div>
+            </div>
+          </div>
+          <div class="bg-row" id="cfg-bg-form-row" hidden>
+            <span class="bg-label" id="cfg-bg-form-label" data-i18n="config.bg.form">Form:</span>
+            <div class="bg-swatches" id="cfg-bg-form-swatches" role="radiogroup" aria-labelledby="cfg-bg-form-label">
+              <div class="bg-swatch active" data-bg="transparent">
+                <span class="bg-swatch-fill bg-transparent"></span>
+                <span class="bg-swatch-name" data-i18n="config.bg.transparent">transparent</span>
+              </div>
+              <div class="bg-swatch" data-bg="white">
+                <span class="bg-swatch-fill" style="background:#ffffff;border:1px solid var(--border);"></span>
+                <span class="bg-swatch-name" data-i18n="config.bg.white">weiß</span>
+              </div>
+              <div class="bg-swatch" data-bg="black">
+                <span class="bg-swatch-fill" style="background:#000000;"></span>
+                <span class="bg-swatch-name" data-i18n="config.bg.black">schwarz</span>
+              </div>
+              <div class="bg-swatch" data-bg="custom">
+                <span class="bg-swatch-fill" id="bg-form-custom-fill" style="background:#ffffff;"></span>
+                <input type="color" id="bg-form-custom-color" value="#ffffff">
+                <span class="bg-swatch-name" data-i18n="config.bg.custom">custom</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset id="cfg-effect-fieldset">
+        <legend data-i18n="config.effect">Effekt</legend>
+        <div class="effect-modes">
+          <label><input type="radio" name="cfg-effect" value="none" checked> <span data-i18n="config.effect.none">Keiner</span></label>
+          <label><input type="radio" name="cfg-effect" value="shadow"> <span data-i18n="config.effect.shadow">Schatten</span></label>
+          <label><input type="radio" name="cfg-effect" value="glow"> <span data-i18n="config.effect.glow">Glühen</span></label>
+        </div>
+        <div id="cfg-effect-shadow-row" class="effect-row" hidden>
+          <label class="inline"><span data-i18n="config.effect.color">Farbe</span> <input type="color" id="cfg-effect-shadow-color" class="effect-swatch" value="#000000"></label>
+          <label class="inline"><span data-i18n="config.effect.strength">Stärke</span> <input type="range" id="cfg-effect-shadow-strength" min="0" max="100" value="50"></label>
+        </div>
+        <div id="cfg-effect-glow-row" class="effect-row" hidden>
+          <label class="inline"><span data-i18n="config.effect.color">Farbe</span> <input type="color" id="cfg-effect-glow-color" class="effect-swatch" value="#ffffff"></label>
+          <label class="inline"><span data-i18n="config.effect.strength">Stärke</span> <input type="range" id="cfg-effect-glow-strength" min="0" max="100" value="50"></label>
+        </div>
+        <div id="cfg-effect-engine-hint" class="hint" hidden data-i18n="config.effect.engineHint">Effekte nur mit d3-cloud.</div>
+      </fieldset>
+
+      <fieldset>
+        <legend data-i18n="config.maskHeading">Form / Maske</legend>
+        <div class="mask-modes" role="radiogroup">
+          <label><input type="radio" name="cfg-mask-mode" value="none" checked> <span data-i18n="config.mask.none">keine (Rechteck)</span></label>
+          <label><input type="radio" name="cfg-mask-mode" value="slug"> <span data-i18n="config.mask.slug">eingebaute Form</span></label>
+          <label><input type="radio" name="cfg-mask-mode" value="svg"> <span data-i18n="config.mask.svg">eigene SVG</span></label>
+        </div>
+        <div id="cfg-mask-gallery" class="mask-gallery" hidden></div>
+        <div id="cfg-mask-upload" class="mask-upload" hidden>
+          <p class="mask-svg-intro" data-i18n="config.mask.svgIntro">Eigenes SVG als Maske. Tipp: auf einer Icon-Seite ein gefülltes Icon wählen → „SVG kopieren" → unten einfügen.</p>
+          <p class="mask-svg-warn hint" data-i18n="config.mask.svgOutlineWarn">Outline-Icons (nur Kontur) taugen nicht als Maske — die Vorschau zeigt sofort, ob die Form trägt.</p>
+          <div class="mask-sources">
+            <span class="mask-sources-label" data-i18n="config.mask.svgSources">Quellen:</span>
+            <a href="https://phosphoricons.com/" target="_blank" rel="noopener noreferrer">Phosphor (fill)</a>
+            <a href="https://fontawesome.com/search?o=r&amp;s=solid&amp;f=classic" target="_blank" rel="noopener noreferrer">Font Awesome (solid)</a>
+            <a href="https://fonts.google.com/icons" target="_blank" rel="noopener noreferrer">Material (filled)</a>
+            <a href="https://heroicons.com/" target="_blank" rel="noopener noreferrer">Heroicons (solid)</a>
+            <a href="https://www.svgrepo.com/" target="_blank" rel="noopener noreferrer">SVG Repo</a>
+          </div>
+          <p class="mask-svg-license hint" data-i18n="config.mask.svgLicenseNote">ⓘ Selbst geladene Icons unterliegen den Lizenzen ihrer Quelle — bitte beachten.</p>
+          <input type="file" id="cfg-mask-file" accept=".svg,image/svg+xml,image/png,image/jpeg,image/webp" hidden>
+          <p class="mask-svg-warn hint" data-i18n="config.mask.imageHint">Oder ein Bild (PNG/JPG): gefülltes, kontrastreiches Motiv — helle Fläche = außen. Foto/Scan wird per Helligkeit getrennt; bei falscher Richtung „Invertieren".</p>
+          <label id="cfg-mask-invert-row" class="mask-invert" hidden>
+            <input type="checkbox" id="cfg-mask-invert"> <span data-i18n="config.mask.invert">Invertieren (hell/dunkel tauschen)</span>
+          </label>
+          <div class="mask-input-row">
+            <button id="btn-mask-upload" type="button" data-i18n="config.mask.upload">Datei wählen…</button>
+            <button id="btn-mask-paste" type="button" data-i18n="config.mask.paste">Aus Zwischenablage einfügen</button>
+          </div>
+          <div class="mask-paste-or">— oder —</div>
+          <div id="cfg-mask-paste-area" class="mask-paste-area" tabindex="0" role="textbox" aria-label="SVG einfügen" data-i18n="config.mask.pasteAreaHint">Hier klicken und mit ⌘V / Strg+V einfügen</div>
+          <span id="cfg-mask-filename" class="mask-filename" hidden>
+            <span id="cfg-mask-filename-text"></span>
+            <button id="btn-mask-remove" type="button" class="mask-filename-x" data-i18n-title="config.mask.remove" title="Entfernen">×</button>
+          </span>
+          <div class="hint" data-i18n="config.mask.uploadHint">Max. 100 KB. Inhalt: gefüllte Form auf transparentem Hintergrund.</div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend data-i18n="config.font">Schrift</legend>
+        <label class="inline">
+          <span data-i18n="config.font.label">Font:</span>
+          <select id="cfg-font"></select>
+        </label>
+        <label class="inline">
+          <span data-i18n="config.scale">Skalierung:</span>
+          <select id="cfg-scale">
+            <option value="sqrt" selected data-i18n="config.scale.sqrt">sqrt (Standard)</option>
+            <option value="linear" data-i18n="config.scale.linear">linear</option>
+            <option value="log" data-i18n="config.scale.log">log</option>
+          </select>
+        </label>
+        <label class="inline">
+          <span data-i18n="config.sizeMin">Min. Größe (px):</span>
+          <input type="number" id="cfg-size-min" value="14" min="6" max="100" step="1">
+        </label>
+        <label class="inline">
+          <span data-i18n="config.sizeMax">Max. Größe (px):</span>
+          <input type="number" id="cfg-size-max" value="96" min="20" max="400" step="1">
+        </label>
+        <details class="cfg-collapsible google-fonts-section">
+          <summary>
+            <span data-i18n="config.googleFonts">Google Fonts</span>
+            <span class="hint" data-i18n="config.googleFonts.hint"> (Internet erforderlich)</span>
+            <span id="gf-offline-badge" class="gf-offline-badge" hidden data-i18n="config.googleFonts.offline">offline</span>
+          </summary>
+          <div class="cfg-collapsible-body">
+            <label class="switch-row">
+              <input type="checkbox" id="cfg-google-fonts-on">
+              <span data-i18n="config.googleFonts.enable">Google Fonts aktivieren</span>
+            </label>
+            <div id="cfg-google-fonts-panel" class="google-fonts-panel" hidden>
+              <div class="google-font-add">
+                <input type="text" id="google-font-input" data-i18n-placeholder="config.googleFonts.placeholder" placeholder="Font-Name (z.B. Sacramento, Lora, Fira Sans)">
+                <button id="btn-add-google-font" type="button" data-i18n="config.googleFonts.add">+ Hinzufügen</button>
+              </div>
+              <div id="google-font-list" class="google-font-list"></div>
+              <p class="hint" data-i18n="config.googleFonts.note">Eingegebene Namen wie auf fonts.google.com geschrieben. Beim Hinzufügen wird der Font geladen und im Font-Dropdown verfügbar.</p>
+            </div>
+          </div>
+        </details>
+      </fieldset>
+
+      <fieldset>
+        <legend data-i18n="config.rotLayout">Rotation &amp; Layout</legend>
+        <label class="inline">
+          <span data-i18n="config.rotMode">Modus:</span>
+          <select id="cfg-rot-mode">
+            <optgroup data-i18n-label="config.rotMode.group.singleH" label="">
+              <option value="horizontal" selected data-i18n="config.rotMode.horizontal">nur waagerecht</option>
+            </optgroup>
+            <optgroup data-i18n-label="config.rotMode.group.skew" label="">
+              <option value="h+up45"   data-i18n="config.rotMode.h+up45">waagerecht + ⤴ 45°</option>
+              <option value="h+down45" data-i18n="config.rotMode.h+down45">waagerecht + ⤵ -45°</option>
+              <option value="h+up90"   data-i18n="config.rotMode.h+up90">waagerecht + ↑ 90°</option>
+              <option value="h+down90" data-i18n="config.rotMode.h+down90">waagerecht + ↓ -90°</option>
+            </optgroup>
+            <optgroup data-i18n-label="config.rotMode.group.sym" label="">
+              <option value="cross-45" data-i18n="config.rotMode.cross-45">X-Form (±45°)</option>
+              <option value="cross-90" data-i18n="config.rotMode.cross-90">T-Form (±90°)</option>
+              <option value="diagonal" data-i18n="config.rotMode.diagonal">diagonal (±45°)</option>
+            </optgroup>
+            <optgroup data-i18n-label="config.rotMode.group.steps" label="">
+              <option value="steps-15" data-i18n="config.rotMode.steps-15">15°-Stufen</option>
+              <option value="steps-30" data-i18n="config.rotMode.steps-30">30°-Stufen</option>
+              <option value="steps-45" data-i18n="config.rotMode.steps-45">45°-Stufen</option>
+            </optgroup>
+            <optgroup data-i18n-label="config.rotMode.group.free" label="">
+              <option value="free"     data-i18n="config.rotMode.free">freie Winkel</option>
+            </optgroup>
+          </select>
+        </label>
+        <div id="cfg-rot-minmax-row" hidden>
+          <label class="inline">
+            <span data-i18n="config.rotMin">Min Winkel (°):</span>
+            <input type="number" id="cfg-rot-min" value="-45" min="-180" max="180" step="1">
+          </label>
+          <label class="inline">
+            <span data-i18n="config.rotMax">Max Winkel (°):</span>
+            <input type="number" id="cfg-rot-max" value="45" min="-180" max="180" step="1">
+          </label>
+        </div>
+        <label class="inline">
+          <span data-i18n="config.rotShare">Anteil rotiert (%):</span>
+          <input type="number" id="cfg-rot-share" value="30" min="0" max="100" step="5">
+        </label>
+        <label class="inline">
+          <span data-i18n="config.rotDistribution">Verteilung:</span>
+          <select id="cfg-rot-distribution">
+            <option value="random"   selected data-i18n="config.rotDistribution.random">zufällig</option>
+            <option value="heaviest" data-i18n="config.rotDistribution.heaviest">nur die schwersten</option>
+            <option value="lightest" data-i18n="config.rotDistribution.lightest">nur die leichtesten</option>
+          </select>
+        </label>
+        <label class="inline">
+          <span data-i18n="config.padding">Padding (px):</span>
+          <input type="number" id="cfg-padding" value="2" min="0" max="20" step="1">
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend data-i18n="config.rendering">Rendering</legend>
+        <label class="inline">
+          <span data-i18n="config.preset">Preset:</span>
+          <select id="cfg-size-preset">
+            <optgroup data-i18n-label="config.preset.group.standard" label="Standard">
+              <option value="1200x800" selected data-i18n="config.preset.format32">1200×800 — Querformat 3:2</option>
+              <option value="1920x1080" data-i18n="config.preset.fullhd">1920×1080 — Full HD</option>
+              <option value="2480x3508" data-i18n="config.preset.a4p">2480×3508 — A4 Hochformat</option>
+              <option value="3508x2480" data-i18n="config.preset.a4l">3508×2480 — A4 Querformat</option>
+            </optgroup>
+            <optgroup data-i18n-label="config.preset.group.social" label="Social Media">
+              <option value="1080x1080" data-i18n="config.preset.square">1080×1080 — Instagram-Post (quadratisch)</option>
+              <option value="1080x1920" data-i18n="config.preset.story">1080×1920 — Story/Reel/TikTok</option>
+              <option value="1000x1500" data-i18n="config.preset.pinterest">1000×1500 — Pinterest</option>
+              <option value="1200x630" data-i18n="config.preset.fblink">1200×630 — Facebook/LinkedIn-Link</option>
+              <option value="1280x720" data-i18n="config.preset.youtube">1280×720 — YouTube-Thumbnail</option>
+            </optgroup>
+            <option value="custom" data-i18n="config.preset.custom">Custom…</option>
+          </select>
+        </label>
+        <label class="inline">
+          <span data-i18n="config.width">Breite (px):</span>
+          <input type="number" id="cfg-width" value="1200" min="200" max="5000" step="10">
+        </label>
+        <label class="inline">
+          <span data-i18n="config.height">Höhe (px):</span>
+          <input type="number" id="cfg-height" value="800" min="200" max="5000" step="10">
+        </label>
+        <label class="inline">
+          <span data-i18n="config.pngScale">PNG-Auflösung:</span>
+          <select id="cfg-png-scale">
+            <option value="1">1×</option>
+            <option value="2" selected>2×</option>
+            <option value="4">4×</option>
+          </select>
+        </label>
+      </fieldset>
+
+      <div class="actions actions-stack">
+        <button id="btn-generate" class="primary" data-i18n="ui.generate">Generieren</button>
+        <div class="reroll-row">
+          <button id="btn-seed-undo" type="button" class="seed-nav-btn" data-i18n-title="seedNav.undo.title" disabled aria-label="Undo">←</button>
+          <button id="btn-reroll" type="button" data-i18n="ui.reroll" data-i18n-title="ui.reroll.title">🎲 Neue Anordnung</button>
+          <button id="btn-seed-redo" type="button" class="seed-nav-btn" data-i18n-title="seedNav.redo.title" disabled aria-label="Redo">→</button>
+          <input type="number" id="cfg-seed" value="1" min="1" max="2147483647" step="1">
+        </div>
+        <label class="switch-row" data-i18n-title="ui.autoUpdate.title">
+          <input type="checkbox" id="cfg-auto-update">
+          <span data-i18n="ui.autoUpdate">Live-Update bei Änderungen</span>
+        </label>
+      </div>
+    </section>
+
+    <section class="panel stage-panel" aria-label="Vorschau">
+      <h2 data-i18n="preview.heading">Vorschau</h2>
+      <div class="stage-wrap">
+        <div class="stage-toolbars">
+          <div class="stage-actionbar">
+            <button id="btn-arrange" type="button" class="stage-action-btn" data-i18n-title="preview.arrange.title" hidden>
+              <span class="stage-action-icon" aria-hidden="true">↻</span>
+              <span data-i18n="preview.arrange">Anordnen</span>
+            </button>
+          </div>
+          <div class="stage-toolbar" role="toolbar" data-i18n-label="preview.viewTools" aria-label="Ansicht">
+            <button id="btn-zoom-out" type="button" class="stage-tool-btn" data-i18n-title="preview.zoomOut" title="Verkleinern" aria-label="Verkleinern">−</button>
+            <span id="zoom-level" class="zoom-level">100 %</span>
+            <button id="btn-zoom-in" type="button" class="stage-tool-btn" data-i18n-title="preview.zoomIn" title="Vergrößern" aria-label="Vergrößern">+</button>
+            <button id="btn-zoom-fit" type="button" class="stage-tool-btn" data-i18n="preview.fitForm" data-i18n-title="preview.fitForm">Ganze Form</button>
+            <label class="stage-guides-toggle"><input type="checkbox" id="cfg-show-guides" checked> <span data-i18n="preview.toggleGuides" data-i18n-title="preview.toggleGuides.title">Silhouette</span></label>
+          </div>
+        </div>
+        <div id="selected-word-panel" class="selected-word-panel" hidden>
+          <span class="sel-word-label" id="sel-word-head">Ausgewähltes Wort</span>
+          <input type="color" id="sel-word-color" value="#888888" data-i18n-title="selWord.color" title="Farbe">
+          <button id="sel-word-color-auto" type="button" class="stage-tool-btn" data-i18n="selWord.auto">Auto</button>
+          <span id="sel-word-rotation-row" class="sel-word-rot" hidden><span data-i18n="selWord.rotation">Drehung</span> <input type="range" id="sel-word-rotation" min="-180" max="180" step="1" value="0"> <span id="sel-word-rotation-val">0°</span> <button id="sel-word-rotation-reset" type="button" class="stage-tool-btn">0°</button></span>
+          <button id="sel-word-unpin" type="button" class="stage-tool-btn" data-i18n="selWord.unpin" hidden>Pin lösen</button>
+        </div>
+        <div id="stage" class="stage"></div>
+        <div id="stage-status" class="stage-status" hidden></div>
+        <svg class="layout-spinner" viewBox="0 0 56 56" aria-hidden="true">
+          <path id="layout-spinner-path" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+        </svg>
+      </div>
+      <div id="messages" class="messages" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <!-- Befüll-Dialog -->
+  <div id="fill-dialog" class="dialog-backdrop" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="fill-dialog-title">
+      <h3 id="fill-dialog-title" data-i18n="fill.heading">Aus Text befüllen</h3>
+      <label class="block">
+        <span data-i18n="fill.target">Zielgruppe:</span>
+        <select id="fill-target-group"></select>
+      </label>
+      <label class="block">
+        <span data-i18n="fill.mode">Modus:</span>
+        <select id="fill-mode">
+          <option value="freitext" selected data-i18n="fill.mode.freitext">Freitext (tokenisieren + zählen)</option>
+          <option value="csv" data-i18n="fill.mode.csv">Wort+Gewicht-Liste (CSV)</option>
+        </select>
+      </label>
+      <label class="block">
+        <span data-i18n="fill.text">Text:</span>
+        <textarea id="fill-text" rows="12" data-i18n-placeholder="fill.text.placeholder" placeholder="Hier Text einfügen…"></textarea>
+      </label>
+      <div class="dialog-actions">
+        <button id="btn-fill-cancel" type="button" data-i18n="fill.cancel">Abbrechen</button>
+        <button id="btn-fill-apply" type="button" class="primary" data-i18n="fill.apply">Auswerten &amp; hinzufügen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gruppen-Editor -->
+  <div id="group-editor" class="dialog-backdrop" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="group-editor-title">
+      <h3 id="group-editor-title" data-i18n="groupEdit.heading">Gruppe bearbeiten</h3>
+      <label class="block">
+        <span data-i18n="groupEdit.name">Name:</span>
+        <input type="text" id="group-edit-name">
+      </label>
+      <div class="block">
+        <span data-i18n="groupEdit.colorHeading">Farbe der Gruppe:</span>
+        <div class="group-color-modes" role="radiogroup">
+          <label><input type="radio" name="group-edit-mode" value="auto" checked> <span data-i18n="groupEdit.mode.auto">Automatisch (folgt globaler Palette)</span></label>
+          <label><input type="radio" name="group-edit-mode" value="color"> <span data-i18n="groupEdit.mode.color">Einzelfarbe</span></label>
+          <label><input type="radio" name="group-edit-mode" value="gradient"> <span data-i18n="groupEdit.mode.gradient">Verlauf (innerhalb der Gruppe)</span></label>
+        </div>
+        <div id="group-edit-color-row" class="group-color-row" hidden>
+          <input type="color" id="group-edit-color" value="#888888">
+        </div>
+        <div id="group-edit-gradient-row" class="group-gradient-row" hidden>
+          <div class="gradient-pickers">
+            <input type="color" id="group-edit-grad-from" class="big-swatch" value="#ff006e">
+            <input type="color" id="group-edit-grad-via"  class="big-swatch" value="#ffffff" disabled>
+            <input type="color" id="group-edit-grad-to"   class="big-swatch" value="#00d4ff">
+          </div>
+          <label class="switch-row small">
+            <input type="checkbox" id="group-edit-grad-use-via">
+            <span data-i18n="groupEdit.gradient.useVia">Via-Farbe verwenden</span>
+          </label>
+        </div>
+      </div>
+      <label class="block">
+        <span data-i18n="groupEdit.font">Font:</span>
+        <select id="group-edit-font"></select>
+      </label>
+      <div class="block">
+        <span data-i18n="groupEdit.rotHeading">Rotation der Gruppe:</span>
+        <select id="group-edit-rot-mode">
+          <option value="auto" selected data-i18n="groupEdit.rot.auto">Automatisch (folgt globaler Rotation)</option>
+          <optgroup data-i18n-label="config.rotMode.group.singleH" label="">
+            <option value="horizontal" data-i18n="config.rotMode.horizontal">nur waagerecht</option>
+          </optgroup>
+          <optgroup data-i18n-label="config.rotMode.group.skew" label="">
+            <option value="h+up45"   data-i18n="config.rotMode.h+up45">waagerecht + ⤴ 45°</option>
+            <option value="h+down45" data-i18n="config.rotMode.h+down45">waagerecht + ⤵ -45°</option>
+            <option value="h+up90"   data-i18n="config.rotMode.h+up90">waagerecht + ↑ 90°</option>
+            <option value="h+down90" data-i18n="config.rotMode.h+down90">waagerecht + ↓ -90°</option>
+          </optgroup>
+          <optgroup data-i18n-label="config.rotMode.group.sym" label="">
+            <option value="cross-45" data-i18n="config.rotMode.cross-45">X-Form (±45°)</option>
+            <option value="cross-90" data-i18n="config.rotMode.cross-90">T-Form (±90°)</option>
+            <option value="diagonal" data-i18n="config.rotMode.diagonal">diagonal (±45°)</option>
+          </optgroup>
+          <optgroup data-i18n-label="config.rotMode.group.steps" label="">
+            <option value="steps-15" data-i18n="config.rotMode.steps-15">15°-Stufen</option>
+            <option value="steps-30" data-i18n="config.rotMode.steps-30">30°-Stufen</option>
+            <option value="steps-45" data-i18n="config.rotMode.steps-45">45°-Stufen</option>
+          </optgroup>
+          <optgroup data-i18n-label="config.rotMode.group.free" label="">
+            <option value="free" data-i18n="config.rotMode.free">freie Winkel</option>
+          </optgroup>
+        </select>
+        <div id="group-edit-rot-hint" class="hint" hidden data-i18n="groupEdit.rotHint.wc2">Per-Gruppe-Rotation greift bei wordcloud2 nicht — globale Rotation gilt.</div>
+        <div id="group-edit-rot-detail" class="group-rot-detail" hidden>
+          <div id="group-edit-rot-minmax-row" hidden>
+            <label class="inline">
+              <span data-i18n="config.rotMin">Min Winkel (°):</span>
+              <input type="number" id="group-edit-rot-min" value="-45" min="-180" max="180" step="1">
+            </label>
+            <label class="inline">
+              <span data-i18n="config.rotMax">Max Winkel (°):</span>
+              <input type="number" id="group-edit-rot-max" value="45" min="-180" max="180" step="1">
+            </label>
+          </div>
+          <label class="inline">
+            <span data-i18n="config.rotShare">Anteil rotiert (%):</span>
+            <input type="number" id="group-edit-rot-share" value="30" min="0" max="100" step="5">
+          </label>
+          <label class="inline">
+            <span data-i18n="config.rotDistribution">Verteilung:</span>
+            <select id="group-edit-rot-distribution">
+              <option value="random" selected data-i18n="config.rotDistribution.random">zufällig</option>
+              <option value="heaviest" data-i18n="config.rotDistribution.heaviest">nur die schwersten</option>
+              <option value="lightest" data-i18n="config.rotDistribution.lightest">nur die leichtesten</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <div class="block">
+        <label class="inline">
+          <span data-i18n="groupEdit.sizeFactor">Größenfaktor:</span>
+          <input type="range" id="group-edit-size-factor" min="0.5" max="2" step="0.1" value="1">
+          <span id="group-edit-size-factor-val" class="range-val">1.0×</span>
+        </label>
+        <label class="inline">
+          <span data-i18n="groupEdit.paddingBonus">Padding-Bonus (px):</span>
+          <input type="range" id="group-edit-padding" min="0" max="20" step="1" value="0">
+          <span id="group-edit-padding-val" class="range-val">0</span>
+        </label>
+        <div id="group-edit-padding-hint" class="hint" data-i18n="groupEdit.paddingHint.wc2" hidden>mit wordcloud2 nicht unterstützt</div>
+      </div>
+      <div class="dialog-actions">
+        <button id="group-edit-delete" type="button" class="danger" data-i18n="groupEdit.delete">Gruppe löschen</button>
+        <button id="group-edit-close" type="button" class="primary" data-i18n="groupEdit.close">Schließen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Credits & Lizenzen -->
+  <div id="credits-dialog" class="dialog-backdrop" hidden>
+    <div class="dialog credits-dialog" role="dialog" aria-modal="true" aria-labelledby="credits-dialog-title">
+      <h3 id="credits-dialog-title" data-i18n="credits.heading">Credits &amp; Lizenzen</h3>
+      <p class="credits-intro" data-i18n="credits.intro">Dieser Wordcloud-Generator nutzt folgende Drittsoftware und Schriften:</p>
+
+      <h4 data-i18n="credits.vendors">Bibliotheken</h4>
+      <ul class="credits-list">
+        <li><strong>d3-dispatch</strong> 1.0.6 — <span class="credits-license">BSD-3-Clause</span> <span class="credits-author">© 2010–2019 Mike Bostock</span></li>
+        <li><strong>d3-cloud</strong> 1.2.9 — <span class="credits-license">BSD-3-Clause</span> <span class="credits-author">© 2013 Jason Davies</span> <span class="credits-note" data-i18n="credits.d3CloudPatched">— mit lokalem Patch für Maskenform-Support (inkl. mehrteilige Masken) und Per-Wort-Pinning</span></li>
+        <li><strong>wordcloud2.js</strong> 1.2.3 — <span class="credits-license">MIT</span> <span class="credits-author">© 2011–2019 Timothy Chien</span> <span class="credits-note" data-i18n="credits.wc2Patched">— mit lokalem Patch für Seed-Reproduzierbarkeit</span></li>
+      </ul>
+
+      <h4 data-i18n="credits.fonts">Schriften</h4>
+      <ul class="credits-list">
+        <li data-i18n="credits.fontsOfl">14 WebFonts unter SIL Open Font License 1.1: Pacifico, Lobster, Bebas Neue, Playfair Display, Anton, Fjalla One, Caveat, Press Start 2P, Cinzel, Shadows Into Light, Architects Daughter, Crimson Text, Righteous, Russo One.</li>
+        <li data-i18n="credits.fontsApache">3 WebFonts unter Apache License 2.0: Permanent Marker, Special Elite, Roboto Slab.</li>
+      </ul>
+
+      <h4 data-i18n="credits.masks">Maskenformen</h4>
+      <p class="credits-block" data-i18n="credits.masksOwn">24 SVG-Silhouetten — Eigenerstellung, Public Domain (CC0-äquivalent).</p>
+      <p class="credits-block" data-i18n="credits.masksLoaded">Selbst geladene oder eingefügte SVGs (z. B. aus Icon-Bibliotheken) unterliegen den Lizenzen ihrer jeweiligen Quelle und liegen in der Verantwortung des Nutzers.</p>
+
+      <h4 data-i18n="credits.about">Entwicklung</h4>
+      <p class="credits-block" data-i18n="credits.developed">Entwickelt mit Hilfe von Anthropic Claude (Claude Code).</p>
+
+      <p class="credits-footer" data-i18n="credits.licensesNote">Vollständige Lizenztexte: LICENSES/-Verzeichnis im Quellcode.</p>
+
+      <div class="dialog-actions">
+        <button id="btn-credits-close" type="button" class="primary" data-i18n="credits.close">Schließen</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+<!--STOPWORDS-DE-->
+  </script>
+  <script>
+<!--STOPWORDS-EN-->
+  </script>
+  <script>
+<!--THEMES-->
+  </script>
+  <script>
+<!--PALETTES-->
+  </script>
+  <script>
+<!--MASKS-->
+  </script>
+  <script>
+<!--LIB-D3-DISPATCH-->
+  </script>
+  <script>
+<!--LIB-D3-CLOUD-->
+  </script>
+  <script>
+<!--LIB-WORDCLOUD2-->
+  </script>
+  <script>
+<!--APP-->
+  </script>
+</body>
+</html>

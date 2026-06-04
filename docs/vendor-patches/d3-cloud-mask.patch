@@ -1,0 +1,132 @@
+--- a/vendor/d3-cloud.js	(d3-cloud v1.2.9 original from cdn.jsdelivr.net/npm/d3-cloud@1.2.9/build/d3.layout.cloud.js)
++++ b/vendor/d3-cloud.js	(Wordcloud-Generator Phasen 4+5+6: Maskenform-Support, mehrteilige Masken, zentriertes Hauptwort, gepinnte Wörter)
+@@ -30,12 +30,28 @@
+       random = Math.random,
+       rotate = () => (~~(random() * 6) - 3) * 30,
+       cloud = {},
+-      canvas = cloudCanvas;
++      canvas = cloudCanvas,
++      maskCanvas = null,  // PATCH (Wordcloud-Generator Phase 4)
++      pinnedWords = [];   // PATCH (Wordcloud-Generator Phase 6): gepinnte Wörter (Fixposition)
+ 
+   cloud.canvas = function(_) {
+     return arguments.length ? (canvas = functor(_), cloud) : canvas;
+   };
+ 
++  // PATCH (Wordcloud-Generator Phase 4): Maskenform-Canvas akzeptieren.
++  // Konvention: alpha > 128 = Pixel blockiert, alpha <= 128 = frei.
++  // Wird vor dem ersten Wort-Place ins board geschrieben.
++  cloud.mask = function(_) {
++    return arguments.length ? (maskCanvas = _, cloud) : maskCanvas;
++  };
++
++  // PATCH (Wordcloud-Generator Phase 6): gepinnte Wörter mit Fixposition.
++  // Jedes: { text, font, size, rotate, padding, x, y, ... } (x/y in mittenrelativen Layout-Koords).
++  // Werden vor der Spiral-Schleife ins board geschrieben (belegt) und in tags geliefert.
++  cloud.pinned = function(_) {
++    return arguments.length ? (pinnedWords = _ || [], cloud) : pinnedWords;
++  };
++
+   cloud.start = function() {
+     var contextAndRatio = getContext(canvas()),
+         board = zeroArray((size[0] >> 5) * size[1]),
+@@ -54,6 +70,70 @@
+           return d;
+         }).sort(function(a, b) { return b.size - a.size; });
+ 
++    // PATCH (Wordcloud-Generator Phase 4): Maskenform ins board prepacken.
++    // board ist int32-Array, board[y * (size[0]>>5) + (x>>5)] hat 32 horizontale Bits.
++    // Bit gesetzt = blockiert. Wir setzen alle alpha-opaken Pixel der Mask-Canvas.
++    if (maskCanvas) {
++      var sw = size[0] >> 5;
++      var mctx = maskCanvas.getContext('2d');
++      var mw = maskCanvas.width, mh = maskCanvas.height;
++      var imgData = mctx.getImageData(0, 0, mw, mh).data;
++      var scaleX = mw / size[0], scaleY = mh / size[1];
++      for (var by = 0; by < size[1]; by++) {
++        var my = Math.floor(by * scaleY);
++        var rowBase = by * sw;
++        var dataRow = my * mw * 4;
++        for (var bx = 0; bx < size[0]; bx++) {
++          var mx = Math.floor(bx * scaleX);
++          if (imgData[dataRow + mx * 4 + 3] > 128) {
++            board[rowBase + (bx >> 5)] |= 1 << (bx & 31);
++          }
++        }
++      }
++    }
++
++    // PATCH (Wordcloud-Generator Phase 6): gepinnte Wörter vorab fix platzieren.
++    // Sprite via cloudSprite, dann Bits unbedingt (ohne Kollisionsprüfung) ins board;
++    // Tag mit Fixposition in tags. Überlappung ist erlaubt (Nutzer-Entscheidung).
++    if (pinnedWords && pinnedWords.length) {
++      var psw = size[0] >> 5;
++      pinnedWords.forEach(function(p) {
++        var d = {};
++        for (var key in p) d[key] = p[key];
++        if (d.style == null) d.style = "normal";
++        if (d.weight == null) d.weight = "normal";
++        d.size = ~~d.size;
++        d.padding = d.padding || 0;
++        d.sprite = null;
++        cloudSprite(contextAndRatio, d, [d], 0);
++        if (!d.hasText) return;
++        d.x = (p.x | 0) + (size[0] >> 1);
++        d.y = (p.y | 0) + (size[1] >> 1);
++        if (d.x + d.x0 >= 0 && d.y + d.y0 >= 0 && d.x + d.x1 <= size[0] && d.y + d.y1 <= size[1]) {
++          var sprite = d.sprite,
++              w = d.width >> 5,
++              lx = d.x - (w << 4),
++              sx = lx & 0x7f,
++              msx = 32 - sx,
++              h = d.y1 - d.y0,
++              bx = (d.y + d.y0) * psw + (lx >> 5),
++              last;
++          for (var j = 0; j < h; j++) {
++            last = 0;
++            for (var ii = 0; ii <= w; ii++) {
++              board[bx + ii] |= (last << msx) | (ii < w ? (last = sprite[j * w + ii]) >>> sx : 0);
++            }
++            bx += psw;
++          }
++        }
++        tags.push(d);
++        if (bounds) cloudBounds(bounds, d);
++        else bounds = [{x: d.x + d.x0, y: d.y + d.y0}, {x: d.x + d.x1, y: d.y + d.y1}];
++        d.x -= size[0] >> 1;
++        d.y -= size[1] >> 1;
++      });
++    }
++
+     if (timer) clearInterval(timer);
+     timer = setInterval(step, 0);
+     step();
+@@ -64,8 +144,12 @@
+       var start = Date.now();
+       while (Date.now() - start < timeInterval && ++i < n && timer) {
+         var d = data[i];
+-        d.x = (size[0] * (random() + .5)) >> 1;
+-        d.y = (size[1] * (random() + .5)) >> 1;
++        // PATCH (Wordcloud-Generator Phase 5): das schwerste Wort (i===0, data ist nach
++        // Größe absteigend sortiert) exakt zentrieren. Ohne dies startet d3-cloud auch
++        // das größte Wort zufällig im mittleren Bereich (25–75% der Breite) → Hauptwort
++        // selten mittig. Restliche Wörter weiterhin zufällig (organisches Layout).
++        if (i === 0) { d.x = size[0] >> 1; d.y = size[1] >> 1; }
++        else { d.x = (size[0] * (random() + .5)) >> 1; d.y = (size[1] * (random() + .5)) >> 1; }
+         cloudSprite(contextAndRatio, d, data, i);
+         if (d.hasText && place(board, d, bounds)) {
+           tags.push(d);
+@@ -132,7 +216,12 @@
+       if (tag.x + tag.x0 < 0 || tag.y + tag.y0 < 0 ||
+           tag.x + tag.x1 > size[0] || tag.y + tag.y1 > size[1]) continue;
+       // TODO only check for collisions within current bounds.
+-      if (!bounds || collideRects(tag, bounds)) {
++      // PATCH (Wordcloud-Generator Phase 5): Bei aktiver Maske die bounds-Überlappung
++      // NICHT erzwingen. Sonst wächst die Wolke als ein einziger zusammenhängender
++      // Klumpen und kann mehrteilige Masken (z.B. zwei getrennte Regionen) nur in der
++      // Region füllen, in der das erste Wort landet. Die Maske begrenzt die Platzierung
++      // ohnehin auf die Form — die bounds-Kompaktierung ist dann überflüssig.
++      if (!bounds || maskCanvas || collideRects(tag, bounds)) {
+         if (!cloudCollide(tag, board, size[0])) {
+           var sprite = tag.sprite,
+               w = tag.width >> 5,

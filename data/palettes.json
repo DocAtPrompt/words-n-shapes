@@ -1,0 +1,28 @@
+{
+  "warm":             { "name": {"de": "Warm", "en": "Warm"},              "colors": ["#D62828", "#F77F00", "#FCBF49", "#EAE2B7", "#8B0000", "#E25822"] },
+  "kuehl":            { "name": {"de": "Kühl", "en": "Cool"},              "colors": ["#003049", "#0077B6", "#00B4D8", "#90E0EF", "#CAF0F8", "#005B96"] },
+  "dramatisch":       { "name": {"de": "Dramatisch", "en": "Dramatic"},        "colors": ["#000000", "#C70039", "#900C3F", "#581845", "#FFC300", "#FF5733"] },
+  "vintage":          { "name": {"de": "Vintage", "en": "Vintage"},           "colors": ["#704214", "#B08D57", "#C9A66B", "#E5C9A6", "#5D4037", "#8B6F47"] },
+  "pastell":          { "name": {"de": "Pastell", "en": "Pastel"},           "colors": ["#FFD6E0", "#C7E9D9", "#FFE5B4", "#C9C9FF", "#E0BBE4", "#FFDFD3", "#B5EAD7"] },
+  "neon":             { "name": {"de": "Neon", "en": "Neon"},              "colors": ["#FF006E", "#00F5FF", "#C2FF1A", "#FF8C00", "#B400FF", "#39FF14"] },
+  "comic":            { "name": {"de": "Comic", "en": "Comic"},             "colors": ["#E63946", "#F1C40F", "#2980B9", "#27AE60", "#8E44AD", "#E67E22"] },
+  "viridis":          { "name": {"de": "Viridis", "en": "Viridis"},           "colors": ["#440154", "#3B528B", "#21908C", "#5DC863", "#FDE725"] },
+  "plasma":           { "name": {"de": "Plasma", "en": "Plasma"},            "colors": ["#0D0887", "#6A00A8", "#B12A90", "#E16462", "#FCA636", "#F0F921"] },
+  "set2":             { "name": {"de": "ColorBrewer Set2", "en": "ColorBrewer Set2"},  "colors": ["#66C2A5", "#FC8D62", "#8DA0CB", "#E78AC3", "#A6D854", "#FFD92F", "#E5C494"] },
+  "dark2":            { "name": {"de": "ColorBrewer Dark2", "en": "ColorBrewer Dark2"}, "colors": ["#1B9E77", "#D95F02", "#7570B3", "#E7298A", "#66A61E", "#E6AB02", "#A6761D"] },
+  "sonnenuntergang":  { "name": {"de": "Sonnenuntergang", "en": "Sunset"},   "colors": ["#2E1A47", "#6A3093", "#C04E91", "#F46036", "#FFC857", "#FF9A6C"] },
+  "winter":           { "name": {"de": "Winter", "en": "Winter"},            "colors": ["#1B3B6F", "#6B98C2", "#ADC9DD", "#DFEBEA", "#7FB7BE", "#5A7D9A"] },
+  "dark":             { "name": {"de": "Dark", "en": "Dark"},              "colors": ["#212121", "#424242", "#616161", "#757575", "#9E9E9E", "#BDBDBD"] },
+  "light":            { "name": {"de": "Light", "en": "Light"},             "colors": ["#FAFAFA", "#F5F5F5", "#E0E0E0", "#BDBDBD", "#9E9E9E", "#757575"] },
+  "sepia":            { "name": {"de": "Sepia", "en": "Sepia"},             "colors": ["#704214", "#A0522D", "#C8A165", "#E7D2A6", "#4B2E0F", "#8B6F47"] },
+  "crazy":            { "name": {"de": "Crazy", "en": "Crazy"},             "colors": ["#FF1493", "#00FF00", "#FFD700", "#FF4500", "#00CED1", "#9400D3", "#FF6347", "#ADFF2F"] },
+  "erdtoene":         { "name": {"de": "Erdtöne", "en": "Earth Tones"},           "colors": ["#5A4D41", "#8B7355", "#B5A186", "#D9C9A8", "#6B7544", "#A2845E"] },
+  "natur":            { "name": {"de": "Natur", "en": "Nature"},             "colors": [
+                                                       "#1F4D2D", "#4A7C3C", "#88B04B", "#B5CE5C",
+                                                       "#4A2C1E", "#7A5238", "#A07453", "#C8A574",
+                                                       "#C9A227", "#E0B340", "#F5CF5A", "#F8E08E",
+                                                       "#1D3557", "#457B9D", "#8FB8D4", "#B5DCDC"
+                                                     ] },
+  "monochrom-blau":   { "name": {"de": "Monochrom Blau", "en": "Monochrome Blue"},    "colors": ["#0D47A1", "#1565C0", "#1976D2", "#1E88E5", "#2196F3", "#42A5F5", "#64B5F6", "#90CAF9"] },
+  "sunset-beach":     { "name": {"de": "Sunset Beach", "en": "Sunset Beach"},      "colors": ["#06AED5", "#086788", "#F0C808", "#FFF1D0", "#DD1C1A", "#FF8C42"] }
+}

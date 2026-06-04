@@ -1,0 +1,51 @@
+--- vendor/wordcloud2.min.js.bak	2026-05-25 11:58:25
++++ vendor/wordcloud2.min.js	2026-05-25 11:58:47
+@@ -160,7 +160,7 @@
+   // Based on http://jsfromhell.com/array/shuffle
+   var shuffleArray = function shuffleArray (arr) {
+     for (var j, x, i = arr.length; i;) {
+-      j = Math.floor(Math.random() * i)
++      j = Math.floor(randomFn() * i)   // PATCH (Wordcloud-Generator Phase 5)
+       x = arr[--i]
+       arr[i] = arr[j]
+       arr[j] = x
+@@ -168,11 +168,17 @@
+     return arr
+   }
+ 
++  // PATCH (Wordcloud-Generator Phase 5) — injizierbare Zufallsquelle für Seed-Reproduzierbarkeit.
++  var randomFn = Math.random;
++
+   var timer = {};
+   var WordCloud = function WordCloud (elements, options) {
+     if (!isSupported) {
+       return
+     }
++
++    // PATCH (Wordcloud-Generator Phase 5) — Seed-Quelle aus Options übernehmen.
++    randomFn = (options && options.random) || Math.random;
+ 
+     var timerId = Math.floor(Math.random() * Date.now())
+ 
+@@ -508,7 +514,7 @@
+         return 0
+       }
+ 
+-      if (Math.random() > settings.rotateRatio) {
++      if (randomFn() > settings.rotateRatio) {   // PATCH (Wordcloud-Generator Phase 5)
+         return 0
+       }
+ 
+@@ -519,10 +525,10 @@
+       if (rotationSteps > 0) {
+         // Min rotation + zero or more steps * span of one step
+         return minRotation +
+-          Math.floor(Math.random() * rotationSteps) *
++          Math.floor(randomFn() * rotationSteps) *   // PATCH (Wordcloud-Generator Phase 5)
+           rotationRange / (rotationSteps - 1)
+       } else {
+-        return minRotation + Math.random() * rotationRange
++        return minRotation + randomFn() * rotationRange   // PATCH (Wordcloud-Generator Phase 5)
+       }
+     }
+ 
