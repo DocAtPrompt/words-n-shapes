@@ -192,8 +192,8 @@ fieldset {
   color: var(--danger); font-size: 0.95rem; padding: 0 0.3rem;
 }
 .google-font-chip .gf-remove:hover { background: #fce8e8; border-radius: 3px; }
-fieldset > div, .fs-body-inner > div { display: flex; flex-direction: column; gap: 0.5rem; }
-fieldset > div[hidden], .fs-body-inner > div[hidden] { display: none; }
+fieldset > div, :where(.fs-body-inner) > div { display: flex; flex-direction: column; gap: 0.5rem; }
+fieldset > div[hidden], :where(.fs-body-inner) > div[hidden] { display: none; }
 legend { font-size: 0.8rem; color: var(--text-soft); padding: 0 0.3rem; font-weight: 600; }
 
 .file-upload { display: flex; align-items: center; gap: 0.5rem; }
