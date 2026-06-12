@@ -1510,6 +1510,8 @@
 
   let currentRender = null;
   let currentLayoutHandle = null;   // { promise, cancel } während ein Layout läuft
+  let renderGeneration = 0;         // monoton steigend; entwertet ältere render()-Läufe
+                                    // schon VOR deren Handle-Erzeugung (Awaits davor)
   let stageDimTimer = null;          // setTimeout-Handle für verzögertes Dimmen (100 ms)
 
   // Archimedische Spirale ~1.5 Umdrehungen, Mittelpunkt (28,28), Radius bis 24.
@@ -2246,16 +2248,22 @@
   async function render(words, cfg) {
     // Schon laufendes Layout abbrechen — neuere Parameter gewinnen
     if (currentLayoutHandle) currentLayoutHandle.cancel();
+    const generation = ++renderGeneration;
     arrangePending = false; refreshArrangeButton();
 
     if (!words.length) {
       setMessage(t('msg.noWords'), 'error');
       currentRender = null;
+      // Auch Layout-UX eines ggf. gerade abgebrochenen Laufs abräumen
+      if (stageDimTimer) { clearTimeout(stageDimTimer); stageDimTimer = null; }
+      document.getElementById('stage').classList.remove('computing');
+      hideStatus();
       clearStage();
       return;
     }
 
     await preloadLayoutFonts(words, cfg);
+    if (generation !== renderGeneration) return;   // überholt — neueres render() läuft bereits
 
     const maxW = Math.max(...words.map(w => w.weight));
     const minW = Math.min(...words.map(w => w.weight));
@@ -2395,6 +2403,7 @@
       try { maskCanvas = await buildMaskCanvas(state.mask, cfg.width, cfg.height); }
       catch (e) { /* Maske ungültig → ignorieren, normales Layout */ }
     }
+    if (generation !== renderGeneration) return;   // überholt während buildMaskCanvas
     // Wenn native: wir geben den slug-Wert via engineCfg.maskShape weiter,
     // damit die Engine den nativen wc2-shape direkt nutzt.
     engineCfg.maskShape = useNativeWc2Shape ? state.mask.value : null;
@@ -3302,11 +3311,13 @@
 
   function moveCustomSlot(from, to) {
     const arr = state.customPalette;
+    // Kapazität erhalten: kann 16 oder (via ensurePaletteCapacity) 24 sein
+    const cap = Math.max(arr.length, PALETTE_BASE_SLOTS);
     const val = arr[from];
     arr.splice(from, 1);
     arr.splice(to, 0, val);
-    while (arr.length < 16) arr.push(null);
-    if (arr.length > 16) arr.length = 16;
+    while (arr.length < cap) arr.push(null);
+    if (arr.length > cap) arr.length = cap;
   }
 
   // ============ Verlauf-Vorschau (mit optionalem Via) ============
@@ -4949,23 +4960,23 @@
       const date = document.createElement('span'); date.className = 'slot-date'; date.textContent = new Date(slot.savedAt).toLocaleString();
       meta.appendChild(name); meta.appendChild(date);
       row.appendChild(meta);
-      const load = document.createElement('button'); load.className = 'slot-action'; load.textContent = 'Laden';
+      const load = document.createElement('button'); load.className = 'slot-action'; load.textContent = t('storage.action.load');
       load.addEventListener('click', () => { if (loadSlot(slot.id)) setMessage(t('msg.slotLoaded', { name: slot.name })); });
       row.appendChild(load);
-      const rename = document.createElement('button'); rename.className = 'slot-action'; rename.textContent = 'Umbenennen';
+      const rename = document.createElement('button'); rename.className = 'slot-action'; rename.textContent = t('storage.action.rename');
       rename.addEventListener('click', () => {
         const nn = prompt(t('prompt.renameSlot'), slot.name);
         if (nn && nn.trim()) { renameSlot(slot.id, nn.trim()); renderSlotList(); }
       });
       row.appendChild(rename);
-      const dup = document.createElement('button'); dup.className = 'slot-action'; dup.textContent = 'Dup';
+      const dup = document.createElement('button'); dup.className = 'slot-action'; dup.textContent = t('storage.action.duplicate');
       dup.addEventListener('click', () => {
         const dupId = duplicateSlot(slot.id, t('slot.duplicate', { name: slot.name }));
         if (dupId) { renderSlotList(); setMessage(t('msg.slotDuplicated')); }
       });
       row.appendChild(dup);
       const del = document.createElement('button'); del.className = 'slot-action del'; del.textContent = '×';
-      del.title = 'Slot löschen';
+      del.title = t('storage.action.delete.title');
       del.addEventListener('click', () => {
         if (!confirm(t('confirm.deleteSlot', { name: slot.name }))) return;
         deleteSlot(slot.id); renderSlotList();
